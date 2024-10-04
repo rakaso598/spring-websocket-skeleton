@@ -4,35 +4,36 @@ import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class MyWebSocketHandler extends TextWebSocketHandler {
 
-    @Override
-    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        // 받은 메시지를 로그로 출력
-        System.out.println("Received message: " + message.getPayload());
-
-        // 클라이언트에게 같은 메시지를 되돌려 보냄
-        session.sendMessage(new TextMessage("Echo: " + message.getPayload()));
-    }
+    private static final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // 연결이 성립된 후, 클라이언트에게 환영 메시지 전송
-        System.out.println("Connection established: " + session.getId());
+        sessions.add(session);
         session.sendMessage(new TextMessage("Welcome! You are connected with session ID: " + session.getId()));
     }
 
     @Override
-    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        // 연결이 종료된 후 처리
-        System.out.println("Connection closed: " + session.getId() + ", Status: " + status);
+    public void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        // 사용자의 메시지와 세션 ID를 함께 전송
+        String msgPayload = session.getId() + ": " + message.getPayload();
+
+        // 모든 클라이언트에게 메시지를 전송
+        for (WebSocketSession s : sessions) {
+            if (s.isOpen()) {
+                s.sendMessage(new TextMessage(msgPayload));
+            }
+        }
     }
 
     @Override
-    public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        // 전송 오류 처리
-        System.err.println("Transport error: " + exception.getMessage());
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        sessions.remove(session);
     }
 }
 
