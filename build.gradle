@@ -28,6 +28,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation 'org.springframework.boot:spring-boot-starter-messaging' // 메시징 (STOMP) 기능
+	implementation 'org.webjars:stompjs:2.3.3' // 클라이언트에서 사용하는 STOMP.js
+	implementation 'org.webjars:sockjs-client:1.5.1' // 클라이언트에서 사용하는 SockJS
 }
 
 tasks.named('test') {
